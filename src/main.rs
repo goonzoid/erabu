@@ -20,7 +20,10 @@ impl epi::App for Erabu {
 }
 
 fn main() {
-    let app = Erabu;
-    let window_options = NativeOptions::default();
+    let app = Erabu::new();
+    let mut window_options = NativeOptions::default();
+    let size_x = 400.0;
+    let size_y = 600.0;
+    window_options.initial_window_size = Some(egui::Vec2::new(size_x, size_y));
     run_native(Box::new(app), window_options);
 }
