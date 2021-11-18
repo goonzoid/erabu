@@ -11,16 +11,31 @@ struct Erabu {
 impl Erabu {
     fn new() -> Erabu {
         let iter = (0..99).map(|i| Project {
-            title: format!("title{}", i),
+            title: format!("a kinda long project title example {}", i),
+            tags: vec!["an tag", "an other tag"]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
         });
         Erabu {
             projects: Vec::from_iter(iter),
         }
     }
+
+    fn render_project(&self, ui: &mut egui::Ui, project: &Project) {
+        ui.heading(&project.title);
+        ui.horizontal(|ui| {
+            for tag in &project.tags {
+                ui.label(tag);
+            }
+        });
+        ui.add_space(8.0);
+    }
 }
 
 struct Project {
     title: String,
+    tags: Vec<String>,
 }
 
 impl epi::App for Erabu {
@@ -40,7 +55,7 @@ impl epi::App for Erabu {
                 .auto_shrink([false; 2])
                 .show(ui, |ui| {
                     for p in &self.projects {
-                        ui.label(&p.title);
+                        self.render_project(ui, p);
                     }
                 });
         });
