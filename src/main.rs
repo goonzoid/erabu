@@ -2,8 +2,9 @@
 #![cfg_attr(not(debug_assertions), deny(warnings))] // Forbid warnings in release builds
 #![warn(clippy::all, rust_2018_idioms)]
 
-use eframe::{egui, epi, run_native, NativeOptions};
+use eframe::{egui, egui::Ui, epi, run_native, NativeOptions};
 
+const PADDING: f32 = 8.0;
 const WHITE: egui::Color32 = egui::Color32::from_rgb(255, 255, 255);
 
 struct Erabu {
@@ -24,14 +25,24 @@ impl Erabu {
         }
     }
 
-    fn render_project(&self, ui: &mut egui::Ui, project: &Project) {
+    fn render_project_list(&self, ui: &mut Ui) {
+        egui::ScrollArea::vertical()
+            .auto_shrink([false; 2])
+            .show(ui, |ui| {
+                for p in &self.projects {
+                    self.render_project(ui, p);
+                }
+            });
+    }
+
+    fn render_project(&self, ui: &mut Ui, project: &Project) {
         ui.add(egui::Label::new(&project.title).text_color(WHITE).heading());
         ui.horizontal(|ui| {
             for tag in &project.tags {
                 ui.label(tag);
             }
         });
-        ui.add_space(8.0);
+        ui.add_space(PADDING);
     }
 }
 
@@ -53,13 +64,7 @@ impl epi::App for Erabu {
                 egui::warn_if_debug_build(ui);
             });
 
-            egui::ScrollArea::vertical()
-                .auto_shrink([false; 2])
-                .show(ui, |ui| {
-                    for p in &self.projects {
-                        self.render_project(ui, p);
-                    }
-                });
+            self.render_project_list(ui);
         });
     }
 }
