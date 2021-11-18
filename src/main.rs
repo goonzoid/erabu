@@ -4,6 +4,8 @@
 
 use eframe::{egui, epi, run_native, NativeOptions};
 
+const WHITE: egui::Color32 = egui::Color32::from_rgb(255, 255, 255);
+
 struct Erabu {
     projects: Vec<Project>,
 }
@@ -23,7 +25,7 @@ impl Erabu {
     }
 
     fn render_project(&self, ui: &mut egui::Ui, project: &Project) {
-        ui.heading(&project.title);
+        ui.add(egui::Label::new(&project.title).text_color(WHITE).heading());
         ui.horizontal(|ui| {
             for tag in &project.tags {
                 ui.label(tag);
