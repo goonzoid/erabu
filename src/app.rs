@@ -13,6 +13,22 @@ struct Project {
     tags: Vec<String>,
 }
 
+impl Default for Erabu {
+    fn default() -> Self {
+        let iter = (0..99).map(|i| Project {
+            title: format!("a kinda long project title example {}", i),
+            tags: vec!["an tag", "an other tag"]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
+        });
+        Self {
+            projects: Vec::from_iter(iter),
+            filter: "".to_owned(),
+        }
+    }
+}
+
 impl epi::App for Erabu {
     fn name(&self) -> &str {
         "erabu"
@@ -36,20 +52,6 @@ impl epi::App for Erabu {
 }
 
 impl Erabu {
-    pub fn new() -> Erabu {
-        let iter = (0..99).map(|i| Project {
-            title: format!("a kinda long project title example {}", i),
-            tags: vec!["an tag", "an other tag"]
-                .iter()
-                .map(|s| s.to_string())
-                .collect(),
-        });
-        Erabu {
-            projects: Vec::from_iter(iter),
-            filter: "".to_owned(),
-        }
-    }
-
     fn visible_projects(&self) -> Vec<&Project> {
         let filter_str = self.filter.as_str();
         return self
