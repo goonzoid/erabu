@@ -67,7 +67,7 @@ impl Erabu {
             .auto_shrink([false; 2])
             .show(ui, |ui| {
                 for p in self.visible_projects() {
-                    self.render_project(ui, &p);
+                    self.render_project(ui, p);
                 }
             });
     }

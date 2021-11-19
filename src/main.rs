@@ -6,7 +6,9 @@ mod app;
 
 fn main() {
     let app = app::Erabu::new();
-    let mut window_options = eframe::NativeOptions::default();
-    window_options.initial_window_size = Some(eframe::egui::Vec2::new(400.0, 600.0));
+    let window_options = eframe::NativeOptions {
+        initial_window_size: Some(eframe::egui::Vec2::new(400.0, 600.0)),
+        ..eframe::NativeOptions::default()
+    };
     eframe::run_native(Box::new(app), window_options);
 }
