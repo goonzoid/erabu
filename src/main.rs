@@ -32,12 +32,24 @@ impl Erabu {
         }
     }
 
+    fn visible_projects(&self) -> Vec<&Project> {
+        let filter_str = self.filter.as_str();
+        return self
+            .projects
+            .iter()
+            .filter(|project| {
+                project.title.contains(filter_str)
+                    || project.tags.iter().any(|tag| tag.contains(filter_str))
+            })
+            .collect();
+    }
+
     fn render_project_list(&self, ui: &mut Ui) {
         egui::ScrollArea::vertical()
             .auto_shrink([false; 2])
             .show(ui, |ui| {
-                for p in &self.projects {
-                    self.render_project(ui, p);
+                for p in self.visible_projects() {
+                    self.render_project(ui, &p);
                 }
             });
     }
