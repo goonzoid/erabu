@@ -3,49 +3,59 @@ use eframe::egui::{
     Align, Color32, Label, Layout, Pos2, ScrollArea, Sense, Stroke, TextEdit, Ui, Vec2, Window,
 };
 use eframe::epi;
+use serde::{Deserialize, Serialize};
 
 const PADDING: f32 = 8.0;
 const WHITE: Color32 = Color32::from_rgb(255, 255, 255);
 
+#[derive(Serialize, Deserialize, Default)]
 pub struct Erabu {
     projects: Vec<Project>,
+
+    #[serde(skip)]
     filter: String,
+    #[serde(skip)]
     adding_project: bool,
+    #[serde(skip)]
     new_project_title: String,
+    #[serde(skip)]
     new_project_tags: String,
+    #[serde(skip)]
     project_ready_to_add: bool,
+    #[serde(skip)]
     deleted_project_title: String,
 }
 
+#[derive(Serialize, Deserialize)]
 struct Project {
     title: String,
     tags: Vec<String>,
 }
 
-impl Default for Erabu {
-    fn default() -> Self {
-        let iter = (0..99).map(|i| Project {
-            title: format!("a kinda long project title example {}", i),
-            tags: vec!["an tag", "an other tag"]
-                .iter()
-                .map(|s| s.to_string())
-                .collect(),
-        });
-        Self {
-            projects: Vec::from_iter(iter),
-            filter: "".to_owned(),
-            adding_project: false,
-            new_project_title: "".to_owned(),
-            new_project_tags: "".to_owned(),
-            project_ready_to_add: false,
-            deleted_project_title: "".to_owned(),
-        }
-    }
-}
-
 impl epi::App for Erabu {
     fn name(&self) -> &str {
         "erabu"
+    }
+
+    fn setup(
+        &mut self,
+        _ctx: &egui::CtxRef,
+        _frame: &mut epi::Frame<'_>,
+        _storage: Option<&dyn epi::Storage>,
+    ) {
+        if let Some(storage) = _storage {
+            *self = epi::get_value(storage, epi::APP_KEY).unwrap_or_default()
+        }
+    }
+
+    fn save(&mut self, storage: &mut dyn epi::Storage) {
+        epi::set_value(storage, epi::APP_KEY, self);
+    }
+
+    // Saving on exit isn't reliable right now (see https://github.com/emilk/egui/issues/597
+    // and https://github.com/emilk/egui/issues/814) so let's auto save often.
+    fn auto_save_interval(&self) -> std::time::Duration {
+        std::time::Duration::from_secs(1)
     }
 
     fn update(&mut self, ctx: &egui::CtxRef, _frame: &mut epi::Frame<'_>) {
