@@ -1,6 +1,6 @@
 use eframe::egui;
 use eframe::egui::{
-    Align, Color32, Label, Layout, Pos2, ScrollArea, Sense, Stroke, TextEdit, Ui, Vec2,
+    Align, Color32, Label, Layout, Pos2, ScrollArea, Sense, Stroke, TextEdit, Ui, Vec2, Window,
 };
 use eframe::epi;
 
@@ -10,6 +10,10 @@ const WHITE: Color32 = Color32::from_rgb(255, 255, 255);
 pub struct Erabu {
     projects: Vec<Project>,
     filter: String,
+    adding_project: bool,
+    new_project_title: String,
+    new_project_tags: String,
+    project_ready_to_add: bool,
     deleted_project_title: String,
 }
 
@@ -30,6 +34,10 @@ impl Default for Erabu {
         Self {
             projects: Vec::from_iter(iter),
             filter: "".to_owned(),
+            adding_project: false,
+            new_project_title: "".to_owned(),
+            new_project_tags: "".to_owned(),
+            project_ready_to_add: false,
             deleted_project_title: "".to_owned(),
         }
     }
@@ -56,6 +64,29 @@ impl epi::App for Erabu {
 
             self.render_project_list(ui);
         });
+
+        Window::new("new project")
+            .open(&mut self.adding_project)
+            .collapsible(false)
+            .resizable(false)
+            .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+            .show(ctx, |ui| {
+                ui.add_space(PADDING);
+                ui.label("title:");
+                ui.add(
+                    TextEdit::singleline(&mut self.new_project_title).desired_width(f32::INFINITY),
+                );
+                ui.label("tags:");
+                ui.add(
+                    TextEdit::singleline(&mut self.new_project_tags).desired_width(f32::INFINITY),
+                );
+                ui.add_space(PADDING);
+                ui.with_layout(Layout::top_down(Align::RIGHT), |ui| {
+                    if ui.button("add").clicked() {
+                        self.project_ready_to_add = true;
+                    }
+                });
+            });
     }
 }
 
@@ -64,6 +95,24 @@ impl Erabu {
         if self.deleted_project_title != "" {
             self.projects
                 .retain(|p| p.title != self.deleted_project_title);
+        }
+
+        if self.project_ready_to_add {
+            self.adding_project = false;
+            self.projects.push(Project {
+                title: self.new_project_title.trim().to_owned(),
+                tags: self
+                    .new_project_tags
+                    .split_whitespace()
+                    .map(|x| x.to_owned())
+                    .collect(),
+            });
+            self.project_ready_to_add = false;
+        }
+
+        if !self.adding_project {
+            self.new_project_title.clear();
+            self.new_project_tags.clear();
         }
     }
 
@@ -93,7 +142,9 @@ impl Erabu {
         ui.add(TextEdit::singleline(&mut self.filter).desired_width(f32::INFINITY));
         ui.add_space(PADDING);
         ui.horizontal(|ui| {
-            if ui.button("add project").clicked() {}
+            if ui.button("add project").clicked() {
+                self.adding_project = true;
+            }
             ui.with_layout(Layout::top_down(Align::RIGHT), |ui| {
                 self.draw_play_icon(ui);
             });
