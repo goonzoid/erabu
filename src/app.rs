@@ -6,6 +6,7 @@ const WHITE: egui::Color32 = egui::Color32::from_rgb(255, 255, 255);
 pub struct Erabu {
     projects: Vec<Project>,
     filter: String,
+    deleted_project_title: String,
 }
 
 struct Project {
@@ -25,6 +26,7 @@ impl Default for Erabu {
         Self {
             projects: Vec::from_iter(iter),
             filter: "".to_owned(),
+            deleted_project_title: "".to_owned(),
         }
     }
 }
@@ -35,6 +37,8 @@ impl epi::App for Erabu {
     }
 
     fn update(&mut self, ctx: &egui::CtxRef, _frame: &mut epi::Frame<'_>) {
+        self.update_data();
+
         egui::TopBottomPanel::bottom("controls").show(ctx, |ui| {
             self.render_controls(ui);
         });
@@ -52,36 +56,32 @@ impl epi::App for Erabu {
 }
 
 impl Erabu {
-    fn visible_projects(&self) -> Vec<&Project> {
-        let filter_str = self.filter.as_str();
-        return self
-            .projects
-            .iter()
-            .filter(|project| {
-                project.title.contains(filter_str)
-                    || project.tags.iter().any(|tag| tag.contains(filter_str))
-            })
-            .collect();
+    fn update_data(&mut self) {
+        if self.deleted_project_title != "" {
+            self.projects
+                .retain(|p| p.title != self.deleted_project_title);
+        }
     }
 
-    fn render_project_list(&self, ui: &mut egui::Ui) {
+    fn render_project_list(&mut self, ui: &mut egui::Ui) {
         egui::ScrollArea::vertical()
             .auto_shrink([false; 2])
             .show(ui, |ui| {
-                for p in self.visible_projects() {
-                    self.render_project(ui, p);
+                for project in filter_projects(self.filter.as_str(), &self.projects) {
+                    ui.add(egui::Label::new(&project.title).text_color(WHITE).heading());
+                    ui.horizontal(|ui| {
+                        for tag in &project.tags {
+                            ui.label(tag);
+                        }
+                        ui.with_layout(egui::Layout::top_down(egui::Align::RIGHT), |ui| {
+                            if ui.button("delete").clicked() {
+                                self.deleted_project_title = project.title.clone();
+                            }
+                        });
+                    });
+                    ui.add_space(PADDING);
                 }
             });
-    }
-
-    fn render_project(&self, ui: &mut egui::Ui, project: &Project) {
-        ui.add(egui::Label::new(&project.title).text_color(WHITE).heading());
-        ui.horizontal(|ui| {
-            for tag in &project.tags {
-                ui.label(tag);
-            }
-        });
-        ui.add_space(PADDING);
     }
 
     fn render_controls(&mut self, ui: &mut egui::Ui) {
@@ -122,4 +122,13 @@ impl Erabu {
         painter.line_segment([top_left, right_below], stroke);
         painter.line_segment([bottom_left, right_above], stroke);
     }
+}
+
+fn filter_projects<'a>(filter: &'a str, projects: &'a Vec<Project>) -> Vec<&'a Project> {
+    return projects
+        .iter()
+        .filter(|project| {
+            project.title.contains(filter) || project.tags.iter().any(|tag| tag.contains(filter))
+        })
+        .collect();
 }
