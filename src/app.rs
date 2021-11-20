@@ -92,19 +92,24 @@ impl Erabu {
         ui.add_space(PADDING);
         ui.add(TextEdit::singleline(&mut self.filter).desired_width(f32::INFINITY));
         ui.add_space(PADDING);
-        ui.vertical_centered(|ui| {
-            self.draw_play_icon(ui);
+        ui.horizontal(|ui| {
+            if ui.button("add project").clicked() {}
+            ui.with_layout(Layout::top_down(Align::RIGHT), |ui| {
+                self.draw_play_icon(ui);
+            });
         });
         ui.add_space(PADDING);
     }
 
     fn draw_play_icon(&self, ui: &mut Ui) {
-        let size = Vec2::splat(18.0);
+        let size = Vec2 { x: 28.0, y: 18.0 };
         let stroke = Stroke::new(2.0, WHITE);
         let (response, painter) = ui.allocate_painter(size, Sense::click());
         let rect = response.rect;
 
-        let (c, h, w) = (rect.center(), rect.height(), rect.width());
+        // use the height as the width to give us a square drawing area with some
+        // padding on the right - yes, it's a dirty hack
+        let (c, h, w) = (rect.center(), rect.height(), rect.height());
         let top_left = Pos2 {
             x: c.x - w / 2.0 + 2.0,
             y: c.y - h / 2.0,
