@@ -1,7 +1,11 @@
-use eframe::{egui, epi};
+use eframe::egui;
+use eframe::egui::{
+    Align, Color32, Label, Layout, Pos2, ScrollArea, Sense, Stroke, TextEdit, Ui, Vec2,
+};
+use eframe::epi;
 
 const PADDING: f32 = 8.0;
-const WHITE: egui::Color32 = egui::Color32::from_rgb(255, 255, 255);
+const WHITE: Color32 = Color32::from_rgb(255, 255, 255);
 
 pub struct Erabu {
     projects: Vec<Project>,
@@ -63,17 +67,17 @@ impl Erabu {
         }
     }
 
-    fn render_project_list(&mut self, ui: &mut egui::Ui) {
-        egui::ScrollArea::vertical()
+    fn render_project_list(&mut self, ui: &mut Ui) {
+        ScrollArea::vertical()
             .auto_shrink([false; 2])
             .show(ui, |ui| {
                 for project in filter_projects(self.filter.as_str(), &self.projects) {
-                    ui.add(egui::Label::new(&project.title).text_color(WHITE).heading());
+                    ui.add(Label::new(&project.title).text_color(WHITE).heading());
                     ui.horizontal(|ui| {
                         for tag in &project.tags {
                             ui.label(tag);
                         }
-                        ui.with_layout(egui::Layout::top_down(egui::Align::RIGHT), |ui| {
+                        ui.with_layout(Layout::top_down(Align::RIGHT), |ui| {
                             if ui.button("delete").clicked() {
                                 self.deleted_project_title = project.title.clone();
                             }
@@ -84,9 +88,9 @@ impl Erabu {
             });
     }
 
-    fn render_controls(&mut self, ui: &mut egui::Ui) {
+    fn render_controls(&mut self, ui: &mut Ui) {
         ui.add_space(PADDING);
-        ui.add(egui::TextEdit::singleline(&mut self.filter).desired_width(f32::INFINITY));
+        ui.add(TextEdit::singleline(&mut self.filter).desired_width(f32::INFINITY));
         ui.add_space(PADDING);
         ui.vertical_centered(|ui| {
             self.draw_play_icon(ui);
@@ -94,26 +98,26 @@ impl Erabu {
         ui.add_space(PADDING);
     }
 
-    fn draw_play_icon(&self, ui: &mut egui::Ui) {
-        let size = egui::Vec2::splat(18.0);
-        let stroke = egui::Stroke::new(2.0, WHITE);
-        let (response, painter) = ui.allocate_painter(size, egui::Sense::click());
+    fn draw_play_icon(&self, ui: &mut Ui) {
+        let size = Vec2::splat(18.0);
+        let stroke = Stroke::new(2.0, WHITE);
+        let (response, painter) = ui.allocate_painter(size, Sense::click());
         let rect = response.rect;
 
         let (c, h, w) = (rect.center(), rect.height(), rect.width());
-        let top_left = egui::Pos2 {
+        let top_left = Pos2 {
             x: c.x - w / 2.0 + 2.0,
             y: c.y - h / 2.0,
         };
-        let bottom_left = egui::Pos2 {
+        let bottom_left = Pos2 {
             x: c.x - w / 2.0 + 2.0,
             y: c.y + h / 2.0,
         };
-        let right_above = egui::Pos2 {
+        let right_above = Pos2 {
             x: c.x + w / 2.0 - 2.0,
             y: c.y - 0.5,
         };
-        let right_below = egui::Pos2 {
+        let right_below = Pos2 {
             x: c.x + w / 2.0 - 2.0,
             y: c.y + 0.5,
         };
