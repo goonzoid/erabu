@@ -104,7 +104,7 @@ impl epi::App for Erabu {
 
 impl Erabu {
     fn update_data(&mut self) {
-        if self.ui_state.deleted_project_title != "" {
+        if !self.ui_state.deleted_project_title.is_empty() {
             self.projects
                 .retain(|p| p.title != self.ui_state.deleted_project_title);
         }
@@ -197,7 +197,7 @@ impl Erabu {
     }
 }
 
-fn filter_projects<'a>(filter: &'a str, projects: &'a Vec<Project>) -> Vec<&'a Project> {
+fn filter_projects<'a>(filter: &'a str, projects: &'a [Project]) -> Vec<&'a Project> {
     return projects
         .iter()
         .filter(|project| {
