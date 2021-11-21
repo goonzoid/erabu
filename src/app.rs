@@ -26,10 +26,23 @@ struct Project {
 struct UIState {
     filter: String,
     adding_project: bool,
-    new_project_title: String,
-    new_project_tags: String,
-    project_ready_to_add: bool,
     deleted_project_title: String,
+    project_template: ProjectTemplate,
+}
+
+#[derive(Default)]
+struct ProjectTemplate {
+    title: String,
+    tags: String,
+    completed: bool,
+}
+
+impl ProjectTemplate {
+    fn clear(&mut self) {
+        self.title.clear();
+        self.tags.clear();
+        self.completed = false;
+    }
 }
 
 impl epi::App for Erabu {
@@ -41,9 +54,9 @@ impl epi::App for Erabu {
         &mut self,
         _ctx: &egui::CtxRef,
         _frame: &mut epi::Frame<'_>,
-        _storage: Option<&dyn epi::Storage>,
+        storage: Option<&dyn epi::Storage>,
     ) {
-        if let Some(storage) = _storage {
+        if let Some(storage) = storage {
             *self = epi::get_value(storage, epi::APP_KEY).unwrap_or_default()
         }
     }
@@ -62,7 +75,7 @@ impl epi::App for Erabu {
         self.update_data();
 
         egui::TopBottomPanel::bottom("controls").show(ctx, |ui| {
-            self.render_controls(ui);
+            render_controls(&mut self.ui_state, ui);
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -72,7 +85,7 @@ impl epi::App for Erabu {
                 egui::warn_if_debug_build(ui);
             });
 
-            self.render_project_list(ui);
+            render_project_list(&self.projects, &mut self.ui_state, ui);
         });
 
         Window::new("new project")
@@ -81,23 +94,7 @@ impl epi::App for Erabu {
             .resizable(false)
             .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
             .show(ctx, |ui| {
-                ui.add_space(PADDING);
-                ui.label("title:");
-                ui.add(
-                    TextEdit::singleline(&mut self.ui_state.new_project_title)
-                        .desired_width(f32::INFINITY),
-                );
-                ui.label("tags:");
-                ui.add(
-                    TextEdit::singleline(&mut self.ui_state.new_project_tags)
-                        .desired_width(f32::INFINITY),
-                );
-                ui.add_space(PADDING);
-                ui.with_layout(Layout::top_down(Align::RIGHT), |ui| {
-                    if ui.button("add").clicked() {
-                        self.ui_state.project_ready_to_add = true;
-                    }
-                });
+                render_add_project_form(&mut self.ui_state.project_template, ui);
             });
     }
 }
@@ -109,61 +106,74 @@ impl Erabu {
                 .retain(|p| p.title != self.ui_state.deleted_project_title);
         }
 
-        if self.ui_state.project_ready_to_add {
+        if self.ui_state.project_template.completed {
             self.ui_state.adding_project = false;
             self.projects.push(Project {
-                title: self.ui_state.new_project_title.trim().to_owned(),
+                title: self.ui_state.project_template.title.trim().to_owned(),
                 tags: self
                     .ui_state
-                    .new_project_tags
+                    .project_template
+                    .tags
                     .split_whitespace()
                     .map(|x| x.to_owned())
                     .collect(),
             });
-            self.ui_state.project_ready_to_add = false;
         }
 
         if !self.ui_state.adding_project {
-            self.ui_state.new_project_title.clear();
-            self.ui_state.new_project_tags.clear();
+            self.ui_state.project_template.clear();
         }
     }
+}
 
-    fn render_project_list(&mut self, ui: &mut Ui) {
-        ScrollArea::vertical()
-            .auto_shrink([false; 2])
-            .show(ui, |ui| {
-                for project in filter_projects(self.ui_state.filter.as_str(), &self.projects) {
-                    ui.add(Label::new(&project.title).text_color(WHITE).heading());
-                    ui.horizontal(|ui| {
-                        for tag in &project.tags {
-                            ui.label(tag);
+fn render_project_list(projects: &[Project], ui_state: &mut UIState, ui: &mut Ui) {
+    ScrollArea::vertical()
+        .auto_shrink([false; 2])
+        .show(ui, |ui| {
+            for project in filter_projects(ui_state.filter.as_str(), projects) {
+                ui.add(Label::new(&project.title).text_color(WHITE).heading());
+                ui.horizontal(|ui| {
+                    for tag in &project.tags {
+                        ui.label(tag);
+                    }
+                    ui.with_layout(Layout::top_down(Align::RIGHT), |ui| {
+                        if ui.button("delete").clicked() {
+                            ui_state.deleted_project_title = project.title.clone();
                         }
-                        ui.with_layout(Layout::top_down(Align::RIGHT), |ui| {
-                            if ui.button("delete").clicked() {
-                                self.ui_state.deleted_project_title = project.title.clone();
-                            }
-                        });
                     });
-                    ui.add_space(PADDING);
-                }
-            });
-    }
-
-    fn render_controls(&mut self, ui: &mut Ui) {
-        ui.add_space(PADDING);
-        ui.add(TextEdit::singleline(&mut self.ui_state.filter).desired_width(f32::INFINITY));
-        ui.add_space(PADDING);
-        ui.horizontal(|ui| {
-            if ui.button("add project").clicked() {
-                self.ui_state.adding_project = true;
+                });
+                ui.add_space(PADDING);
             }
-            ui.with_layout(Layout::top_down(Align::RIGHT), |ui| {
-                draw_play_icon(ui);
-            });
         });
-        ui.add_space(PADDING);
-    }
+}
+
+fn render_controls(ui_state: &mut UIState, ui: &mut Ui) {
+    ui.add_space(PADDING);
+    ui.add(TextEdit::singleline(&mut ui_state.filter).desired_width(f32::INFINITY));
+    ui.add_space(PADDING);
+    ui.horizontal(|ui| {
+        if ui.button("add project").clicked() {
+            ui_state.adding_project = true;
+        }
+        ui.with_layout(Layout::top_down(Align::RIGHT), |ui| {
+            draw_play_icon(ui);
+        });
+    });
+    ui.add_space(PADDING);
+}
+
+fn render_add_project_form(project_template: &mut ProjectTemplate, ui: &mut Ui) {
+    ui.add_space(PADDING);
+    ui.label("title:");
+    ui.add(TextEdit::singleline(&mut project_template.title).desired_width(f32::INFINITY));
+    ui.label("tags:");
+    ui.add(TextEdit::singleline(&mut project_template.tags).desired_width(f32::INFINITY));
+    ui.add_space(PADDING);
+    ui.with_layout(Layout::top_down(Align::RIGHT), |ui| {
+        if ui.button("add").clicked() {
+            project_template.completed = true;
+        }
+    });
 }
 
 fn filter_projects<'a>(filter: &'a str, projects: &'a [Project]) -> Vec<&'a Project> {
