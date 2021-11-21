@@ -213,7 +213,7 @@ fn render_add_project_form(project_template: &mut ProjectTemplate, ui: &mut Ui) 
             project_template.completed = true;
         }
     });
-    return title_field;
+    title_field
 }
 
 fn filter_projects<'a>(filter: &'a str, projects: &'a [Project]) -> Vec<&'a Project> {
