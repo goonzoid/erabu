@@ -137,16 +137,19 @@ fn render_project_list(projects: &[Project], ui_state: &mut UIState, ui: &mut Ui
         .auto_shrink([false; 2])
         .show(ui, |ui| {
             for project in filter_projects(ui_state.filter.as_str(), projects) {
-                ui.add(Label::new(&project.title).text_color(WHITE).heading());
                 ui.horizontal(|ui| {
-                    for tag in &project.tags {
-                        ui.label(tag);
-                    }
+                    ui.add(Label::new(&project.title).text_color(WHITE).heading());
                     ui.with_layout(Layout::top_down(Align::RIGHT), |ui| {
+                        ui.add_space(3.0); // magic! :)
                         if ui.button("delete").clicked() {
                             ui_state.deleted_project_title = project.title.clone();
                         }
                     });
+                });
+                ui.horizontal(|ui| {
+                    for tag in &project.tags {
+                        ui.label(tag);
+                    }
                 });
                 ui.add_space(PADDING);
             }
