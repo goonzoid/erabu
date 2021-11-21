@@ -1,7 +1,5 @@
 use eframe::egui;
-use eframe::egui::{
-    Align, Color32, Label, Layout, Pos2, ScrollArea, Sense, Stroke, TextEdit, Ui, Vec2, Window,
-};
+use eframe::egui::{Align, Color32, Label, Layout, ScrollArea, TextEdit, Ui, Window};
 use eframe::epi;
 use serde::{Deserialize, Serialize};
 
@@ -29,6 +27,8 @@ struct UIState {
     deleted_project_title: String,
     project_template: ProjectTemplate,
     title_field_needs_focus: bool,
+    party_time: bool,
+    random_number: Option<usize>,
 }
 
 #[derive(Default)]
@@ -101,6 +101,24 @@ impl epi::App for Erabu {
                     self.ui_state.title_field_needs_focus = false;
                 }
             });
+
+        Window::new("you should...")
+            .open(&mut self.ui_state.party_time)
+            .collapsible(false)
+            .resizable(false)
+            .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+            .show(ctx, |ui| match self.ui_state.random_number {
+                Some(r) => {
+                    let projects = filter_projects(self.ui_state.filter.as_str(), &self.projects);
+                    let project = projects[r % projects.len()];
+                    ui.with_layout(Layout::top_down(Align::Center), |ui| {
+                        ui.add(Label::new(&project.title).text_color(WHITE).heading());
+                    });
+                }
+                None => {
+                    self.ui_state.random_number = rand::random();
+                }
+            });
     }
 }
 
@@ -128,6 +146,10 @@ impl Erabu {
         if !self.ui_state.adding_project {
             self.ui_state.project_template.clear();
             self.ui_state.title_field_needs_focus = true;
+        }
+
+        if !self.ui_state.party_time {
+            self.ui_state.random_number = None;
         }
     }
 }
@@ -169,7 +191,10 @@ fn render_controls(ui_state: &mut UIState, ui: &mut Ui) {
             ui_state.adding_project = true;
         }
         ui.with_layout(Layout::top_down(Align::RIGHT), |ui| {
-            draw_play_icon(ui);
+            if ui.button("tell me what to do!").clicked() {
+                ui_state.random_number = rand::random();
+                ui_state.party_time = true;
+            }
         });
     });
     ui.add_space(PADDING);
@@ -198,35 +223,4 @@ fn filter_projects<'a>(filter: &'a str, projects: &'a [Project]) -> Vec<&'a Proj
             project.title.contains(filter) || project.tags.iter().any(|tag| tag.contains(filter))
         })
         .collect();
-}
-
-fn draw_play_icon(ui: &mut Ui) {
-    let size = Vec2 { x: 28.0, y: 18.0 };
-    let stroke = Stroke::new(2.0, WHITE);
-    let (response, painter) = ui.allocate_painter(size, Sense::click());
-    let rect = response.rect;
-
-    // use the height as the width to give us a square drawing area with some
-    // padding on the right - yes, it's a dirty hack
-    let (c, h, w) = (rect.center(), rect.height(), rect.height());
-    let top_left = Pos2 {
-        x: c.x - w / 2.0 + 2.0,
-        y: c.y - h / 2.0,
-    };
-    let bottom_left = Pos2 {
-        x: c.x - w / 2.0 + 2.0,
-        y: c.y + h / 2.0,
-    };
-    let right_above = Pos2 {
-        x: c.x + w / 2.0 - 2.0,
-        y: c.y - 0.5,
-    };
-    let right_below = Pos2 {
-        x: c.x + w / 2.0 - 2.0,
-        y: c.y + 0.5,
-    };
-
-    painter.line_segment([top_left, bottom_left], stroke);
-    painter.line_segment([top_left, right_below], stroke);
-    painter.line_segment([bottom_left, right_above], stroke);
 }
