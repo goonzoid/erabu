@@ -13,23 +13,23 @@ pub struct Erabu {
     projects: Vec<Project>,
 
     #[serde(skip)]
-    filter: String,
-    #[serde(skip)]
-    adding_project: bool,
-    #[serde(skip)]
-    new_project_title: String,
-    #[serde(skip)]
-    new_project_tags: String,
-    #[serde(skip)]
-    project_ready_to_add: bool,
-    #[serde(skip)]
-    deleted_project_title: String,
+    ui_state: UIState,
 }
 
 #[derive(Serialize, Deserialize)]
 struct Project {
     title: String,
     tags: Vec<String>,
+}
+
+#[derive(Default)]
+struct UIState {
+    filter: String,
+    adding_project: bool,
+    new_project_title: String,
+    new_project_tags: String,
+    project_ready_to_add: bool,
+    deleted_project_title: String,
 }
 
 impl epi::App for Erabu {
@@ -76,7 +76,7 @@ impl epi::App for Erabu {
         });
 
         Window::new("new project")
-            .open(&mut self.adding_project)
+            .open(&mut self.ui_state.adding_project)
             .collapsible(false)
             .resizable(false)
             .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
@@ -84,16 +84,18 @@ impl epi::App for Erabu {
                 ui.add_space(PADDING);
                 ui.label("title:");
                 ui.add(
-                    TextEdit::singleline(&mut self.new_project_title).desired_width(f32::INFINITY),
+                    TextEdit::singleline(&mut self.ui_state.new_project_title)
+                        .desired_width(f32::INFINITY),
                 );
                 ui.label("tags:");
                 ui.add(
-                    TextEdit::singleline(&mut self.new_project_tags).desired_width(f32::INFINITY),
+                    TextEdit::singleline(&mut self.ui_state.new_project_tags)
+                        .desired_width(f32::INFINITY),
                 );
                 ui.add_space(PADDING);
                 ui.with_layout(Layout::top_down(Align::RIGHT), |ui| {
                     if ui.button("add").clicked() {
-                        self.project_ready_to_add = true;
+                        self.ui_state.project_ready_to_add = true;
                     }
                 });
             });
@@ -102,27 +104,28 @@ impl epi::App for Erabu {
 
 impl Erabu {
     fn update_data(&mut self) {
-        if self.deleted_project_title != "" {
+        if self.ui_state.deleted_project_title != "" {
             self.projects
-                .retain(|p| p.title != self.deleted_project_title);
+                .retain(|p| p.title != self.ui_state.deleted_project_title);
         }
 
-        if self.project_ready_to_add {
-            self.adding_project = false;
+        if self.ui_state.project_ready_to_add {
+            self.ui_state.adding_project = false;
             self.projects.push(Project {
-                title: self.new_project_title.trim().to_owned(),
+                title: self.ui_state.new_project_title.trim().to_owned(),
                 tags: self
+                    .ui_state
                     .new_project_tags
                     .split_whitespace()
                     .map(|x| x.to_owned())
                     .collect(),
             });
-            self.project_ready_to_add = false;
+            self.ui_state.project_ready_to_add = false;
         }
 
-        if !self.adding_project {
-            self.new_project_title.clear();
-            self.new_project_tags.clear();
+        if !self.ui_state.adding_project {
+            self.ui_state.new_project_title.clear();
+            self.ui_state.new_project_tags.clear();
         }
     }
 
@@ -130,7 +133,7 @@ impl Erabu {
         ScrollArea::vertical()
             .auto_shrink([false; 2])
             .show(ui, |ui| {
-                for project in filter_projects(self.filter.as_str(), &self.projects) {
+                for project in filter_projects(self.ui_state.filter.as_str(), &self.projects) {
                     ui.add(Label::new(&project.title).text_color(WHITE).heading());
                     ui.horizontal(|ui| {
                         for tag in &project.tags {
@@ -138,7 +141,7 @@ impl Erabu {
                         }
                         ui.with_layout(Layout::top_down(Align::RIGHT), |ui| {
                             if ui.button("delete").clicked() {
-                                self.deleted_project_title = project.title.clone();
+                                self.ui_state.deleted_project_title = project.title.clone();
                             }
                         });
                     });
@@ -149,11 +152,11 @@ impl Erabu {
 
     fn render_controls(&mut self, ui: &mut Ui) {
         ui.add_space(PADDING);
-        ui.add(TextEdit::singleline(&mut self.filter).desired_width(f32::INFINITY));
+        ui.add(TextEdit::singleline(&mut self.ui_state.filter).desired_width(f32::INFINITY));
         ui.add_space(PADDING);
         ui.horizontal(|ui| {
             if ui.button("add project").clicked() {
-                self.adding_project = true;
+                self.ui_state.adding_project = true;
             }
             ui.with_layout(Layout::top_down(Align::RIGHT), |ui| {
                 self.draw_play_icon(ui);
