@@ -28,6 +28,7 @@ struct UIState {
     adding_project: bool,
     deleted_project_title: String,
     project_template: ProjectTemplate,
+    title_field_needs_focus: bool,
 }
 
 #[derive(Default)]
@@ -94,7 +95,11 @@ impl epi::App for Erabu {
             .resizable(false)
             .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
             .show(ctx, |ui| {
-                render_add_project_form(&mut self.ui_state.project_template, ui);
+                let response = render_add_project_form(&mut self.ui_state.project_template, ui);
+                if self.ui_state.title_field_needs_focus {
+                    response.request_focus();
+                    self.ui_state.title_field_needs_focus = false;
+                }
             });
     }
 }
@@ -122,6 +127,7 @@ impl Erabu {
 
         if !self.ui_state.adding_project {
             self.ui_state.project_template.clear();
+            self.ui_state.title_field_needs_focus = true;
         }
     }
 }
@@ -162,10 +168,11 @@ fn render_controls(ui_state: &mut UIState, ui: &mut Ui) {
     ui.add_space(PADDING);
 }
 
-fn render_add_project_form(project_template: &mut ProjectTemplate, ui: &mut Ui) {
+fn render_add_project_form(project_template: &mut ProjectTemplate, ui: &mut Ui) -> egui::Response {
     ui.add_space(PADDING);
     ui.label("title:");
-    ui.add(TextEdit::singleline(&mut project_template.title).desired_width(f32::INFINITY));
+    let title_field =
+        ui.add(TextEdit::singleline(&mut project_template.title).desired_width(f32::INFINITY));
     ui.label("tags:");
     ui.add(TextEdit::singleline(&mut project_template.tags).desired_width(f32::INFINITY));
     ui.add_space(PADDING);
@@ -174,6 +181,7 @@ fn render_add_project_form(project_template: &mut ProjectTemplate, ui: &mut Ui) 
             project_template.completed = true;
         }
     });
+    return title_field;
 }
 
 fn filter_projects<'a>(filter: &'a str, projects: &'a [Project]) -> Vec<&'a Project> {
