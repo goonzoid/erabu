@@ -155,7 +155,11 @@ fn render_project_list(projects: &[Project], ui_state: &mut UIState, ui: &mut Ui
 
 fn render_controls(ui_state: &mut UIState, ui: &mut Ui) {
     ui.add_space(PADDING);
-    ui.add(TextEdit::singleline(&mut ui_state.filter).desired_width(f32::INFINITY));
+    ui.horizontal(|ui| {
+        ui.label("search:");
+        ui.add(TextEdit::singleline(&mut ui_state.filter).desired_width(f32::INFINITY));
+    });
+    ui.add_space(PADDING);
     ui.add_space(PADDING);
     ui.horizontal(|ui| {
         if ui.button("add project").clicked() {
