@@ -1,5 +1,5 @@
 use eframe::egui;
-use eframe::egui::{Align, Color32, Label, Layout, ScrollArea, TextEdit, Ui, Window};
+use eframe::egui::{Align, Button, Color32, Label, Layout, ScrollArea, TextEdit, Ui, Window};
 use eframe::epi;
 use serde::{Deserialize, Serialize};
 
@@ -162,8 +162,8 @@ fn render_project_list(projects: &[Project], ui_state: &mut UIState, ui: &mut Ui
                 ui.horizontal(|ui| {
                     ui.add(Label::new(&project.title).text_color(WHITE).heading());
                     ui.with_layout(Layout::top_down(Align::RIGHT), |ui| {
-                        ui.add_space(3.0); // magic! :)
-                        if ui.button("delete").clicked() {
+                        let response = ui.add(Button::new("❌").frame(false));
+                        if response.clicked() {
                             ui_state.deleted_project_title = project.title.clone();
                         }
                     });
@@ -187,11 +187,11 @@ fn render_controls(ui_state: &mut UIState, ui: &mut Ui) {
     ui.add_space(PADDING);
     ui.add_space(PADDING);
     ui.horizontal(|ui| {
-        if ui.button("add project").clicked() {
+        if ui.button("➕").clicked() {
             ui_state.adding_project = true;
         }
         ui.with_layout(Layout::top_down(Align::RIGHT), |ui| {
-            if ui.button("tell me what to do!").clicked() {
+            if ui.button("▶").clicked() {
                 ui_state.random_number = rand::random();
                 ui_state.party_time = true;
             }
