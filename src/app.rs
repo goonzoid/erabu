@@ -102,7 +102,7 @@ impl epi::App for Erabu {
                 }
             });
 
-        Window::new("you should...")
+        Window::new("⏩")
             .open(&mut self.ui_state.party_time)
             .collapsible(false)
             .resizable(false)
