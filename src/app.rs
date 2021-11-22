@@ -173,7 +173,7 @@ fn render_project_list(projects: &[Project], ui_state: &mut UIState, ui: &mut Ui
                         ui.label(tag);
                     }
                 });
-                ui.add_space(PADDING);
+                ui.separator();
             }
         });
 }
