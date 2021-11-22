@@ -185,7 +185,6 @@ fn render_controls(ui_state: &mut UIState, ui: &mut Ui) {
         ui.add(TextEdit::singleline(&mut ui_state.filter).desired_width(f32::INFINITY));
     });
     ui.add_space(PADDING);
-    ui.add_space(PADDING);
     ui.horizontal(|ui| {
         if ui.button("➕").clicked() {
             ui_state.adding_project = true;
