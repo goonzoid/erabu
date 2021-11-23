@@ -75,17 +75,15 @@ impl epi::App for Erabu {
     fn update(&mut self, ctx: &egui::CtxRef, _frame: &mut epi::Frame<'_>) {
         self.update_data();
 
-        egui::TopBottomPanel::bottom("controls").show(ctx, |ui| {
-            render_controls(&mut self.ui_state, ui);
+        egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
+            render_menu_bar(&mut self.ui_state, ui);
+        });
+
+        egui::TopBottomPanel::bottom("search_and_play").show(ctx, |ui| {
+            render_search_and_play(&mut self.ui_state, ui);
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            // this actually creates a very small gap at the top for release
-            // builds, but let's not worry about that for now!
-            ui.vertical_centered(|ui| {
-                egui::warn_if_debug_build(ui);
-            });
-
             render_project_list(&self.projects, &mut self.ui_state, ui);
         });
 
@@ -182,23 +180,32 @@ fn render_project_list(projects: &[Project], ui_state: &mut UIState, ui: &mut Ui
         });
 }
 
-fn render_controls(ui_state: &mut UIState, ui: &mut Ui) {
+fn render_menu_bar(ui_state: &mut UIState, ui: &mut Ui) {
+    ui.add_space(PADDING);
+    ui.horizontal(|ui| {
+        if ui.button("➕").clicked() {
+            ui_state.adding_project = true;
+        }
+
+        ui.with_layout(Layout::top_down(Align::RIGHT), |ui| {
+            egui::warn_if_debug_build(ui);
+        });
+    });
+    ui.add_space(PADDING);
+}
+
+fn render_search_and_play(ui_state: &mut UIState, ui: &mut Ui) {
     ui.add_space(PADDING);
     ui.horizontal(|ui| {
         ui.label("search:");
         ui.add(TextEdit::singleline(&mut ui_state.filter).desired_width(f32::INFINITY));
     });
     ui.add_space(PADDING);
-    ui.horizontal(|ui| {
-        if ui.button("➕").clicked() {
-            ui_state.adding_project = true;
+    ui.with_layout(Layout::top_down(Align::RIGHT), |ui| {
+        if ui.button("▶").clicked() {
+            ui_state.random_number = rand::random();
+            ui_state.party_time = true;
         }
-        ui.with_layout(Layout::top_down(Align::RIGHT), |ui| {
-            if ui.button("▶").clicked() {
-                ui_state.random_number = rand::random();
-                ui_state.party_time = true;
-            }
-        });
     });
     ui.add_space(PADDING);
 }
