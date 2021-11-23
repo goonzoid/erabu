@@ -31,6 +31,41 @@ struct UIState {
     random_number: Option<usize>,
 }
 
+impl UIState {
+    fn remove_deleted_project(&mut self, projects: &mut Vec<Project>) {
+        if !self.deleted_project_title.is_empty() {
+            projects.retain(|p| p.title != self.deleted_project_title);
+            self.deleted_project_title.clear();
+        }
+    }
+
+    fn add_project(&mut self, projects: &mut Vec<Project>) {
+        if self.project_template.completed {
+            self.adding_project = false;
+            projects.push(Project {
+                title: self.project_template.title.trim().to_owned(),
+                tags: self
+                    .project_template
+                    .tags
+                    .split_whitespace()
+                    .map(|x| x.to_owned())
+                    .collect(),
+            });
+        }
+
+        if !self.adding_project {
+            self.project_template.clear();
+            self.title_field_needs_focus = true;
+        }
+    }
+
+    fn clear_random_number(&mut self) {
+        if !self.party_time {
+            self.random_number = None;
+        }
+    }
+}
+
 #[derive(Default)]
 struct ProjectTemplate {
     title: String,
@@ -122,34 +157,9 @@ impl epi::App for Erabu {
 
 impl Erabu {
     fn update_data(&mut self) {
-        if !self.ui_state.deleted_project_title.is_empty() {
-            self.projects
-                .retain(|p| p.title != self.ui_state.deleted_project_title);
-            self.ui_state.deleted_project_title.clear();
-        }
-
-        if self.ui_state.project_template.completed {
-            self.ui_state.adding_project = false;
-            self.projects.push(Project {
-                title: self.ui_state.project_template.title.trim().to_owned(),
-                tags: self
-                    .ui_state
-                    .project_template
-                    .tags
-                    .split_whitespace()
-                    .map(|x| x.to_owned())
-                    .collect(),
-            });
-        }
-
-        if !self.ui_state.adding_project {
-            self.ui_state.project_template.clear();
-            self.ui_state.title_field_needs_focus = true;
-        }
-
-        if !self.ui_state.party_time {
-            self.ui_state.random_number = None;
-        }
+        self.ui_state.remove_deleted_project(&mut self.projects);
+        self.ui_state.add_project(&mut self.projects);
+        self.ui_state.clear_random_number();
     }
 }
 
