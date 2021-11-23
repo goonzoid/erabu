@@ -11,7 +11,7 @@ pub struct ErabuApp {
     projects: Vec<Project>,
 
     #[serde(skip)]
-    ui_state: UIState,
+    controller: Controller,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -21,7 +21,7 @@ struct Project {
 }
 
 #[derive(Default)]
-struct UIState {
+struct Controller {
     filter: String,
     adding_project: bool,
     deleted_project_title: String,
@@ -31,7 +31,13 @@ struct UIState {
     random_number: Option<usize>,
 }
 
-impl UIState {
+impl Controller {
+    fn update(&mut self, projects: &mut Vec<Project>) {
+        self.remove_deleted_project(projects);
+        self.add_project(projects);
+        self.clear_random_number();
+    }
+
     fn remove_deleted_project(&mut self, projects: &mut Vec<Project>) {
         if !self.deleted_project_title.is_empty() {
             projects.retain(|p| p.title != self.deleted_project_title);
@@ -108,72 +114,64 @@ impl epi::App for ErabuApp {
     }
 
     fn update(&mut self, ctx: &egui::CtxRef, _frame: &mut epi::Frame<'_>) {
-        self.update_data();
+        self.controller.update(&mut self.projects);
 
         egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
-            render_menu_bar(&mut self.ui_state, ui);
+            render_menu_bar(&mut self.controller, ui);
         });
 
         egui::TopBottomPanel::bottom("search_and_play").show(ctx, |ui| {
-            render_search_and_play(&mut self.ui_state, ui);
+            render_search_and_play(&mut self.controller, ui);
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            render_project_list(&self.projects, &mut self.ui_state, ui);
+            render_project_list(&self.projects, &mut self.controller, ui);
         });
 
         Window::new("new project")
-            .open(&mut self.ui_state.adding_project)
+            .open(&mut self.controller.adding_project)
             .collapsible(false)
             .resizable(false)
             .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
             .show(ctx, |ui| {
-                let response = render_add_project_form(&mut self.ui_state.project_template, ui);
-                if self.ui_state.title_field_needs_focus {
+                let response = render_add_project_form(&mut self.controller.project_template, ui);
+                if self.controller.title_field_needs_focus {
                     response.request_focus();
-                    self.ui_state.title_field_needs_focus = false;
+                    self.controller.title_field_needs_focus = false;
                 }
             });
 
         Window::new("⏩")
-            .open(&mut self.ui_state.party_time)
+            .open(&mut self.controller.party_time)
             .collapsible(false)
             .resizable(false)
             .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
-            .show(ctx, |ui| match self.ui_state.random_number {
+            .show(ctx, |ui| match self.controller.random_number {
                 Some(r) => {
-                    let projects = filter_projects(self.ui_state.filter.as_str(), &self.projects);
+                    let projects = filter_projects(self.controller.filter.as_str(), &self.projects);
                     let project = projects[r % projects.len()];
                     ui.with_layout(Layout::top_down(Align::Center), |ui| {
                         ui.add(Label::new(&project.title).text_color(WHITE).heading());
                     });
                 }
                 None => {
-                    self.ui_state.random_number = rand::random();
+                    self.controller.random_number = rand::random();
                 }
             });
     }
 }
 
-impl ErabuApp {
-    fn update_data(&mut self) {
-        self.ui_state.remove_deleted_project(&mut self.projects);
-        self.ui_state.add_project(&mut self.projects);
-        self.ui_state.clear_random_number();
-    }
-}
-
-fn render_project_list(projects: &[Project], ui_state: &mut UIState, ui: &mut Ui) {
+fn render_project_list(projects: &[Project], controller: &mut Controller, ui: &mut Ui) {
     ScrollArea::vertical()
         .auto_shrink([false; 2])
         .show(ui, |ui| {
-            for project in filter_projects(ui_state.filter.as_str(), projects) {
+            for project in filter_projects(controller.filter.as_str(), projects) {
                 ui.horizontal(|ui| {
                     ui.add(Label::new(&project.title).text_color(WHITE).heading());
                     ui.with_layout(Layout::top_down(Align::RIGHT), |ui| {
                         let response = ui.add(Button::new("❌").frame(false));
                         if response.clicked() {
-                            ui_state.deleted_project_title = project.title.clone();
+                            controller.deleted_project_title = project.title.clone();
                         }
                     });
                 });
@@ -190,11 +188,11 @@ fn render_project_list(projects: &[Project], ui_state: &mut UIState, ui: &mut Ui
         });
 }
 
-fn render_menu_bar(ui_state: &mut UIState, ui: &mut Ui) {
+fn render_menu_bar(controller: &mut Controller, ui: &mut Ui) {
     ui.add_space(PADDING);
     ui.horizontal(|ui| {
         if ui.button("➕").clicked() {
-            ui_state.adding_project = true;
+            controller.adding_project = true;
         }
 
         ui.with_layout(Layout::top_down(Align::RIGHT), |ui| {
@@ -204,17 +202,17 @@ fn render_menu_bar(ui_state: &mut UIState, ui: &mut Ui) {
     ui.add_space(PADDING);
 }
 
-fn render_search_and_play(ui_state: &mut UIState, ui: &mut Ui) {
+fn render_search_and_play(controller: &mut Controller, ui: &mut Ui) {
     ui.add_space(PADDING);
     ui.horizontal(|ui| {
         ui.label("search:");
-        ui.add(TextEdit::singleline(&mut ui_state.filter).desired_width(f32::INFINITY));
+        ui.add(TextEdit::singleline(&mut controller.filter).desired_width(f32::INFINITY));
     });
     ui.add_space(PADDING);
     ui.with_layout(Layout::top_down(Align::Center), |ui| {
         if ui.button("▶").clicked() {
-            ui_state.random_number = rand::random();
-            ui_state.party_time = true;
+            controller.random_number = rand::random();
+            controller.party_time = true;
         }
     });
     ui.add_space(PADDING);
