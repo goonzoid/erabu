@@ -201,7 +201,7 @@ fn render_search_and_play(ui_state: &mut UIState, ui: &mut Ui) {
         ui.add(TextEdit::singleline(&mut ui_state.filter).desired_width(f32::INFINITY));
     });
     ui.add_space(PADDING);
-    ui.with_layout(Layout::top_down(Align::RIGHT), |ui| {
+    ui.with_layout(Layout::top_down(Align::Center), |ui| {
         if ui.button("▶").clicked() {
             ui_state.random_number = rand::random();
             ui_state.party_time = true;
