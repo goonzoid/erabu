@@ -127,6 +127,7 @@ impl Erabu {
         if !self.ui_state.deleted_project_title.is_empty() {
             self.projects
                 .retain(|p| p.title != self.ui_state.deleted_project_title);
+            self.ui_state.deleted_project_title.clear();
         }
 
         if self.ui_state.project_template.completed {
