@@ -173,6 +173,9 @@ fn render_project_list(projects: &[Project], ui_state: &mut UIState, ui: &mut Ui
                     for tag in &project.tags {
                         ui.label(tag);
                     }
+                    if project.tags.is_empty() {
+                        ui.label(""); // blank label for spacing
+                    }
                 });
                 ui.separator();
             }
