@@ -7,7 +7,7 @@ const PADDING: f32 = 8.0;
 const WHITE: Color32 = Color32::from_rgb(255, 255, 255);
 
 #[derive(Serialize, Deserialize, Default)]
-pub struct Erabu {
+pub struct ErabuApp {
     projects: Vec<Project>,
 
     #[serde(skip)]
@@ -81,7 +81,7 @@ impl ProjectTemplate {
     }
 }
 
-impl epi::App for Erabu {
+impl epi::App for ErabuApp {
     fn name(&self) -> &str {
         "erabu"
     }
@@ -155,7 +155,7 @@ impl epi::App for Erabu {
     }
 }
 
-impl Erabu {
+impl ErabuApp {
     fn update_data(&mut self) {
         self.ui_state.remove_deleted_project(&mut self.projects);
         self.ui_state.add_project(&mut self.projects);

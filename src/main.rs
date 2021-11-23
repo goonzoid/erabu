@@ -5,7 +5,7 @@
 mod app;
 
 fn main() {
-    let app = app::Erabu::default();
+    let app = app::ErabuApp::default();
     let window_options = eframe::NativeOptions {
         initial_window_size: Some(eframe::egui::Vec2::new(400.0, 600.0)),
         ..eframe::NativeOptions::default()
