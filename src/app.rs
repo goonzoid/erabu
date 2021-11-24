@@ -128,18 +128,21 @@ impl epi::App for ErabuApp {
             render_project_list(&self.projects, &mut self.controller, ui);
         });
 
-        Window::new("new project")
-            .open(&mut self.controller.adding_project)
-            .collapsible(false)
-            .resizable(false)
-            .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
-            .show(ctx, |ui| {
-                let response = render_add_project_form(&mut self.controller.project_template, ui);
-                if self.controller.title_field_needs_focus {
-                    response.request_focus();
-                    self.controller.title_field_needs_focus = false;
-                }
-            });
+        if !self.controller.party_time {
+            Window::new("new project")
+                .open(&mut self.controller.adding_project)
+                .collapsible(false)
+                .resizable(false)
+                .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+                .show(ctx, |ui| {
+                    let response =
+                        render_add_project_form(&mut self.controller.project_template, ui);
+                    if self.controller.title_field_needs_focus {
+                        response.request_focus();
+                        self.controller.title_field_needs_focus = false;
+                    }
+                });
+        } // hmm... not sure about this
 
         Window::new("⏩")
             .open(&mut self.controller.party_time)
@@ -149,12 +152,13 @@ impl epi::App for ErabuApp {
             .show(ctx, |ui| match self.controller.random_number {
                 Some(r) => {
                     let projects = filter_projects(self.controller.filter.as_str(), &self.projects);
-                    let project = projects[r % projects.len()];
+                    let project = projects[r % projects.len()]; // this breaks if filtering changes while it's party_time
                     ui.with_layout(Layout::top_down(Align::Center), |ui| {
                         ui.add(Label::new(&project.title).text_color(WHITE).heading());
                     });
                 }
                 None => {
+                    println!("show called while random_number was None");
                     self.controller.random_number = rand::random();
                 }
             });

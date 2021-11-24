@@ -1,0 +1,14 @@
+possible egui bug:
+rendering multiple items in scrollview, using
+ui.with_layout(egui::Layout::right_to_left(),...
+first item fills entire visible panel!
+
+TODO next:
+add buttons to selected project window
+make main window inactive when displaing an overlay window
+change delete buttons to edit buttons and use a window to edit/delete
+make project selection window not flicker (better logic for when to generate and clear random index)
+if no projects exist, show a nice big way to add them
+maybe do alternating colour project backgrounds for easier list viewing
+hover on delete buttons could highlight the relevant project
+
